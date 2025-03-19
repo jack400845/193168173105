@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Kassensystem</title>
+    <link href="tailwind.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-4">
+
+    <div class="max-w-5xl mx-auto bg-white p-4 rounded-lg shadow-lg">
+        <div class="flex justify-between">
+            <h1 class="text-2xl font-bold mb-4">POS Kassensystem</h1>
+            <p id="currentUser" class="text-lg font-semibold"></p>
+            <p class="text-lg font-semibold">Kassen-ID: <span id="kassenID">92666</span></p>
+            <button class="bg-red-500 text-white p-2 rounded-lg" onclick="logout()">Abmelden</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-gray-200 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-2">Warenkorb</h2>
+                <ul id="cartItems" class="mb-2"></ul>
+                <p class="text-lg font-bold">Gesamt: <span id="totalPrice">0.00</span> €</p>
+                <button class="bg-green-500 text-white p-3 rounded-lg w-full mt-4" onclick="goToPayment()">Zur Kasse</button>
+            </div>
+
+            <div class="bg-gray-200 p-4 rounded-lg">
+                <h2 class="text-xl font-semibold mb-2">Produkte</h2>
+                <input type="text" id="productSearch" class="w-full p-2 border rounded mb-2" placeholder="EAN eingeben oder Menge setzen" onkeydown="handleInput(event)">
+                <div class="grid grid-cols-2 gap-4" id="productButtons"></div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <h2 class="text-xl font-semibold mb-2">Funktionstasten</h2>
+            <button class="bg-yellow-500 text-white p-3 rounded-lg w-full mb-2" onclick="applyDiscount()">Rabatt</button>
+            <button class="bg-blue-500 text-white p-3 rounded-lg w-full" onclick="applyNewPrice()">Neuer Preis</button>
+            <button class="bg-gray-600 text-white p-3 rounded-lg w-full" onclick="switchUser()">Benutzer wechseln</button>
+            <button class="bg-blue-500 text-white p-3 rounded-lg w-full" onclick="openOrders()">Aufträge</button>
+            <button class="bg-orange-500 text-white p-3 rounded-lg w-full" onclick="removeItem()">Positionsstorno</button>
+            <button class="bg-green-500 text-white p-3 rounded-lg w-full" onclick="handleTransaction('+')">Einzahlung (+)</button>
+            <button class="bg-red-500 text-white p-3 rounded-lg w-full" onclick="handleTransaction('-')">Auszahlung (-)</button>
+            <button class="bg-orange-500 text-white p-3 rounded-lg w-full" onclick="cancelTransaction()">Bonabbruch</button>
+            <button class="bg-purple-500 text-white p-3 rounded-lg w-full" onclick="openBonJournal()">Bonjournal</button>
+            <button class="bg-gray-800 text-white p-3 rounded-lg w-full" onclick="openBonStorno()">Bonstorno</button>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+        let total = 0;
+        let bonJournal = [];
+        let userRole = "Benutzer";
+
+        function openBonJournal() {
+            alert("Bonjournal wird geöffnet...");
+            console.log(bonJournal);
+        }
+
+        function openBonStorno() {
+            if (userRole === "Ab. Benutzer" || userRole === "Benutzer") {
+                requestApproval();
+            } else {
+                alert("Bonstorno wird geöffnet...");
+            }
+        }
+
+        function requestApproval() {
+            let adminCode = prompt("Admin PIN eingeben zur Freigabe:");
+            if (adminCode === "1234") {
+                alert("Freigabe erteilt!");
+            } else {
+                alert("Falsche PIN. Keine Berechtigung!");
+            }
+        }
+
+        function cancelTransaction() {
+            cart = [];
+            total = 0;
+            updateCart();
+            alert("Bonabbruch: Vorgang wurde verworfen.");
+        }
+
+        function completePayment() {
+            let transaction = {
+                items: cart,
+                total: total,
+                paymentMethod: "Bar",
+                kassenID: document.getElementById("kassenID").textContent,
+                date: new Date().toLocaleString()
+            };
+            bonJournal.push(transaction);
+            cart = [];
+            total = 0;
+            updateCart();
+            alert("Zahlung erfolgreich. Bon gespeichert.");
+        }
+
+        function removeItem() {
+            let itemIndex = prompt("Index des zu entfernenden Artikels eingeben:");
+            if (itemIndex !== null && cart[itemIndex]) {
+                total -= cart[itemIndex].price;
+                cart.splice(itemIndex, 1);
+                updateCart();
+                alert("Artikel wurde entfernt.");
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>
