@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Kassensystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        button {
+            font-weight: bold;
+            color: black;
+            font-size: 1.1rem;
+            padding: 1.2rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+
+    <div class="max-w-6xl mx-auto bg-white p-4 rounded-lg shadow-lg">
+        <!-- Kopfzeile mit Benutzer, Kassen-ID und Datum -->
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h1 class="text-2xl font-bold">POS Kassensystem</h1>
+            <div>
+                <p class="text-lg font-semibold">Kassen-ID: <span id="kassenID">37522</span></p>
+                <p class="text-lg font-semibold">Angemeldet als: <span id="currentUser"></span></p>
+                <p class="text-lg font-semibold">Datum & Uhrzeit: <span id="currentTime"></span></p>
+            </div>
+            <button class="bg-red-500 text-white rounded-lg" onclick="logout()">Abmelden</button>
+        </div>
+
+        <!-- Hauptbereich: Warenkorb & Produktkategorien -->
+        <div class="grid grid-cols-2 gap-4">
+            <!-- Linke Seite: Warenkorb -->
+            <div class="bg-gray-200 p-4 rounded-lg h-96">
+                <h2 class="text-xl font-semibold mb-2">Warenkorb</h2>
+                <ul id="cartItems" class="mb-2"></ul>
+                <p class="text-lg font-bold">Summe: <span id="totalPrice">0.00</span> €</p>
+            </div>
+
+            <!-- Rechte Seite: Produktkategorien -->
+            <div class="bg-gray-200 p-4 rounded-lg h-96">
+                <h2 class="text-xl font-semibold mb-2">Produkte</h2>
+                <div class="grid grid-cols-3 gap-4" id="productButtons">
+                    <button class="bg-blue-500 text-black rounded-lg">Kategorie 1</button>
+                    <button class="bg-blue-500 text-black rounded-lg">Kategorie 2</button>
+                    <button class="bg-blue-500 text-black rounded-lg">Kategorie 3</button>
+                    <button class="bg-blue-500 text-black rounded-lg">Kategorie 4</button>
+                    <button class="bg-blue-500 text-black rounded-lg">Kategorie 5</button>
+                    <button class="bg-blue-500 text-black rounded-lg">Kategorie 6</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Untere Sektion: Nummernfeld + Funktionstasten (größer) -->
+        <div class="grid grid-cols-2 gap-4 mt-4">
+            <!-- Nummernfeld -->
+            <div class="grid grid-cols-3 gap-2 p-4 bg-gray-200 rounded-lg w-2/3">
+                <button class="bg-gray-300 rounded-lg">1</button>
+                <button class="bg-gray-300 rounded-lg">2</button>
+                <button class="bg-gray-300 rounded-lg">3</button>
+                <button class="bg-gray-300 rounded-lg">4</button>
+                <button class="bg-gray-300 rounded-lg">5</button>
+                <button class="bg-gray-300 rounded-lg">6</button>
+                <button class="bg-gray-300 rounded-lg">7</button>
+                <button class="bg-gray-300 rounded-lg">8</button>
+                <button class="bg-gray-300 rounded-lg">9</button>
+                <button class="bg-gray-300 rounded-lg">0</button>
+                <button class="bg-red-400 rounded-lg" onclick="clearInput()">LÖSCHEN</button>
+                <button class="bg-green-400 rounded-lg" onclick="confirmInput()">EINGABE</button>
+            </div>
+
+            <!-- Funktionstasten (größer und mit Aktionen) -->
+            <div class="grid grid-cols-2 gap-2 p-4 bg-gray-300 rounded-lg w-1/3">
+                <button class="bg-gray-400 rounded-lg" onclick="changeQuantity()">MENGE</button>
+                <button class="bg-blue-500 rounded-lg" onclick="processPayment()">BEZAHLEN</button>
+                <button class="bg-red-500 rounded-lg" onclick="openBonStorno()">Bonstorno</button>
+                <button class="bg-red-500 rounded-lg" onclick="cancelTransaction()">Bonabbruch</button>
+                <button class="bg-pink-400 rounded-lg" onclick="removeItem()">Zeilenstorno</button>
+                <button class="bg-white rounded-lg border" onclick="openOrders()">Auftrag</button>
+                <button class="bg-yellow-500 rounded-lg" onclick="applyNewPrice()">Neuer Preis</button>
+                <button class="bg-yellow-500 rounded-lg" onclick="applyDiscount()">Rabatt</button>
+                <button class="bg-white rounded-lg border" onclick="handleTransaction('+')">Einzahlung</button>
+                <button class="bg-white rounded-lg border" onclick="handleTransaction('-')">Auszahlung</button>
+                <button class="bg-white rounded-lg border" onclick="openBonJournal()">Bonjournal</button>
+                <button class="bg-white rounded-lg border" onclick="goHome()">Home</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDateTime() {
+            let now = new Date();
+            document.getElementById("currentTime").textContent = now.toLocaleString();
+        }
+
+        function logout() {
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+        }
+
+        function removeItem() {
+            alert("Artikel aus Warenkorb entfernt (Zeilenstorno)");
+        }
+
+        function openBonStorno() {
+            alert("Liste der letzten 20 Bons geöffnet");
+        }
+
+        function cancelTransaction() {
+            alert("Aktueller Vorgang abgebrochen");
+        }
+
+        function processPayment() {
+            alert("Bezahlung durchgeführt");
+        }
+
+        function handleTransaction(type) {
+            alert(type === "+" ? "Einzahlung durchgeführt" : "Auszahlung durchgeführt");
+        }
+
+        function applyNewPrice() {
+            alert("Neuer Preis festgelegt");
+        }
+
+        function applyDiscount() {
+            alert("Rabatt angewendet");
+        }
+
+        function confirmInput() {
+            alert("Eingabe bestätigt");
+        }
+
+        function clearInput() {
+            alert("Eingabe gelöscht");
+        }
+
+        function openOrders() {
+            alert("Liste der Aufträge geöffnet");
+        }
+
+        function openBonJournal() {
+            alert("Bonjournal geöffnet");
+        }
+
+        function goHome() {
+            alert("Zur Startseite zurückgekehrt");
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            let user = JSON.parse(localStorage.getItem("currentUser"));
+            if (!user) {
+                window.location.href = "login.html";
+            } else {
+                document.getElementById("currentUser").textContent = user.name;
+            }
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        });
+    </script>
+
+</body>
+</html>
