@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-200 flex items-center justify-center h-screen">
+
+    <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+        <h1 class="text-2xl font-bold text-center mb-4">POS Kassensystem Login</h1>
+
+        <label class="block font-semibold">Benutzername:</label>
+        <input type="text" id="username" class="w-full p-2 border rounded mb-2" placeholder="Benutzername eingeben">
+
+        <label class="block font-semibold">Passwort:</label>
+        <input type="password" id="password" class="w-full p-2 border rounded mb-4" placeholder="Passwort">
+
+        <button class="bg-blue-600 text-white p-3 rounded-lg w-full" onclick="login()">Anmelden</button>
+        
+        <p id="errorMessage" class="text-red-500 text-center mt-2 hidden">Falsche Anmeldedaten!</p>
+    </div>
+
+    <script>
+        function login() {
+            let username = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+
+            if (username === "1111" && password === "1234") {
+                localStorage.setItem("currentUser", JSON.stringify({ name: "Admin", id: username }));
+                window.location.href = "index.html";
+            } else {
+                document.getElementById("errorMessage").classList.remove("hidden");
+            }
+        }
+    </script>
+
+</body>
+</html>
