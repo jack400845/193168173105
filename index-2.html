@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>POS Kassensystem</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    button {
+      font-weight: bold;
+      color: black;
+      font-size: 1.1rem;
+      padding: 1.5rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 p-4">
+  <div class="max-w-full mx-auto bg-white p-4 rounded-lg shadow-lg">
+    <div class="flex justify-between items-center mb-4 border-b pb-2">
+      <h1 class="text-2xl font-bold">POS Kassensystem</h1>
+      <div>
+        <p class="text-lg font-semibold">Kassen-ID: <span id="kassenID"></span></p>
+        <p class="text-lg font-semibold">Angemeldet als: <span id="currentUser"></span></p>
+        <p class="text-lg font-semibold">Datum & Uhrzeit: <span id="currentTime"></span></p>
+      </div>
+      <div class="flex gap-2">
+        <button class="bg-gray-400 text-white rounded-lg" onclick="pauseUser()">Pause</button>
+        <button class="bg-red-500 text-white rounded-lg" onclick="logout()">Abmelden</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 h-[400px]">
+      <div class="bg-gray-200 p-4 rounded-lg overflow-auto">
+        <h2 class="text-xl font-semibold mb-2">Warenkorb</h2>
+        <ul id="cartItems" class="mb-2 space-y-1"></ul>
+        <p class="text-lg font-bold">Summe: <span id="totalPrice">0.00</span> €</p>
+      </div>
+      <div class="bg-gray-200 p-4 rounded-lg">
+        <h2 class="text-xl font-semibold mb-2">Produkte</h2>
+        <div class="grid grid-cols-3 gap-2 h-full overflow-y-auto">
+          <button class="bg-blue-500 text-black rounded-lg">Kategorie 1</button><button class="bg-blue-500 text-black rounded-lg">Kategorie 2</button><button class="bg-blue-500 text-black rounded-lg">Kategorie 3</button><button class="bg-blue-500 text-black rounded-lg">Kategorie 4</button><button class="bg-blue-500 text-black rounded-lg">Kategorie 5</button><button class="bg-blue-500 text-black rounded-lg">Kategorie 6</button><button class="bg-blue-500 text-black rounded-lg">Kategorie 7</button><button class="bg-blue-500 text-black rounded-lg">Kategorie 8</button><button class="bg-blue-500 text-black rounded-lg">Kategorie 9</button><button class="bg-blue-500 text-black rounded-lg">Kategorie 10</button><button class="bg-blue-500 text-black rounded-lg">Kategorie 11</button><button class="bg-blue-500 text-black rounded-lg">Kategorie 12</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mt-4">
+      <div class="grid grid-cols-3 gap-2 p-4 bg-gray-200 rounded-lg h-[400px]">
+        <button class="bg-gray-300 rounded-lg">1</button>
+        <button class="bg-gray-300 rounded-lg">2</button>
+        <button class="bg-gray-300 rounded-lg">3</button>
+        <button class="bg-gray-300 rounded-lg">4</button>
+        <button class="bg-gray-300 rounded-lg">5</button>
+        <button class="bg-gray-300 rounded-lg">6</button>
+        <button class="bg-gray-300 rounded-lg">7</button>
+        <button class="bg-gray-300 rounded-lg">8</button>
+        <button class="bg-gray-300 rounded-lg">9</button>
+        <button class="bg-gray-300 rounded-lg">0</button>
+        <button class="bg-red-400 rounded-lg">LÖSCHEN</button>
+        <button class="bg-green-400 rounded-lg">EINGABE</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 p-4 bg-gray-300 rounded-lg h-[400px]">
+        <button class="bg-white border rounded-lg">Bonjournal</button>
+        <button class="bg-white border rounded-lg">Home</button>
+        <button class="bg-white border rounded-lg">Einzahlung</button>
+        <button class="bg-white border rounded-lg">Auszahlung</button>
+        <button class="bg-white border rounded-lg">Auftrag</button>
+        <button class="bg-yellow-500 rounded-lg">Neuer Preis</button>
+        <button class="bg-yellow-500 rounded-lg">Rabatt</button>
+        <button class="bg-pink-400 rounded-lg">Zeilenstorno</button>
+        <button class="bg-red-500 rounded-lg">Bonstorno</button>
+        <button class="bg-red-500 rounded-lg">Bonabbruch</button>
+        <button class="bg-blue-500 rounded-lg">BEZAHLEN</button>
+        <button class="bg-gray-400 rounded-lg">MENGE</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    function updateDateTime() {
+      document.getElementById("currentTime").textContent = new Date().toLocaleString();
+    }
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+    function pauseUser() {
+      const user = JSON.parse(localStorage.getItem("currentUser"));
+      localStorage.setItem("pauseUser", user.id);
+      localStorage.removeItem("currentUser");
+      window.location.href = "login.html";
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+      const user = JSON.parse(localStorage.getItem("currentUser"));
+      if (!user) window.location.href = "login.html";
+      else document.getElementById("currentUser").textContent = user.name;
+      document.getElementById("kassenID").textContent = localStorage.getItem("kassenID");
+      updateDateTime();
+      setInterval(updateDateTime, 1000);
+    });
+  </script>
+</body>
+</html>
