@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+  <div class="bg-white p-6 rounded shadow w-80">
+    <h1 class="text-xl font-bold mb-4 text-center">POS Login</h1>
+    <input id="username" class="w-full mb-2 p-2 border rounded" placeholder="Benutzername" />
+    <input id="password" class="w-full mb-4 p-2 border rounded" type="password" placeholder="Passwort" />
+    <button onclick="login()" class="w-full bg-blue-500 text-white p-2 rounded">Anmelden</button>
+    <p id="error" class="text-red-500 mt-2 hidden text-center">Falsche Daten</p>
+  </div>
+  <script>
+    function login() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      if (user === "admin" && pass === "1234") {
+        localStorage.setItem("user", user);
+        window.location.href = "index.html";
+      } else {
+        document.getElementById("error").classList.remove("hidden");
+      }
+    }
+  </script>
+</body>
+</html>
