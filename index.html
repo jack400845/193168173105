@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>POS Final mit allen Funktionen</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+  <div class="max-w-6xl mx-auto bg-white p-6 rounded shadow">
+    <div class="flex justify-between mb-4">
+      <div>
+        <h1 class="text-2xl font-bold">POS System</h1>
+        <p><strong>Benutzer:</strong> <span id="userDisplay">---</span></p>
+        <p><strong>Kassen-ID:</strong> <span id="kassenID">---</span></p>
+        <p><strong>Zeit:</strong> <span id="timestamp">---</span></p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="pause()" class="bg-gray-400 text-white px-4 py-1 rounded">Pause</button>
+        <button onclick="logout()" class="bg-red-500 text-white px-4 py-1 rounded">Abmelden</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div>
+        <h2 class="font-semibold mb-1">Warenkorb</h2>
+        <ul id="cartList" class="bg-gray-100 h-48 overflow-y-auto p-2 rounded mb-2"></ul>
+        <p class="font-bold">Gesamt: <span id="total">0.00</span> €</p>
+      </div>
+      <div>
+        <h2 class="font-semibold mb-1">Produkte</h2>
+        <div id="products" class="grid grid-cols-2 gap-2 bg-gray-100 p-2 h-48 overflow-y-auto rounded"></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-3 gap-2">
+        <input id="inputDisplay" class="col-span-3 border p-2 text-center text-lg rounded" placeholder="Eingabe" disabled />
+        <button onclick="appendInput('1')" class="bg-gray-300 rounded">1</button>
+        <button onclick="appendInput('2')" class="bg-gray-300 rounded">2</button>
+        <button onclick="appendInput('3')" class="bg-gray-300 rounded">3</button>
+        <button onclick="appendInput('4')" class="bg-gray-300 rounded">4</button>
+        <button onclick="appendInput('5')" class="bg-gray-300 rounded">5</button>
+        <button onclick="appendInput('6')" class="bg-gray-300 rounded">6</button>
+        <button onclick="appendInput('7')" class="bg-gray-300 rounded">7</button>
+        <button onclick="appendInput('8')" class="bg-gray-300 rounded">8</button>
+        <button onclick="appendInput('9')" class="bg-gray-300 rounded">9</button>
+        <button onclick="appendInput('0')" class="bg-gray-300 rounded">0</button>
+        <button onclick="appendInput('.')" class="bg-gray-300 rounded">,</button>
+        <button onclick="clearInput()" class="bg-red-400 col-span-2 rounded">Löschen</button>
+        <button onclick="confirmInput()" class="bg-green-400 rounded">Eingabe</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="applyInput('preis')" class="bg-yellow-300 rounded">Neuer Preis</button>
+        <button onclick="applyInput('rabatt')" class="bg-yellow-300 rounded">Rabatt</button>
+        <button onclick="applyInput('menge')" class="bg-gray-300 rounded">Menge</button>
+        <button onclick="auftrag()" class="bg-white border rounded">Auftrag</button>
+        <button onclick="removeLast()" class="bg-pink-300 rounded">Zeilenstorno</button>
+        <button onclick="bonAbbruch()" class="bg-red-400 text-white rounded">Bonabbruch</button>
+        <button onclick="bonStorno()" class="bg-red-500 text-white rounded">Bonstorno</button>
+        <button onclick="toggleBonjournal()" class="bg-white border rounded">Bonjournal</button>
+        <button onclick="einzahlung()" class="bg-green-500 text-white rounded">Einzahlung</button>
+        <button onclick="auszahlung()" class="bg-red-500 text-white rounded">Auszahlung</button>
+        <button onclick="pay()" class="bg-blue-500 text-white rounded col-span-2 text-lg py-2">Bezahlen</button>
+      </div>
+    </div>
+
+    <div id="bonjournalWrapper" class="hidden mt-6 bg-gray-50 p-4 rounded">
+      <h2 class="font-semibold mb-2">Bonjournal</h2>
+      <ul id="bonjournal" class="space-y-2 text-sm"></ul>
+    </div>
+  </div>
+
+<script>
+let cart = [], input = "", bonjournal = [], kassenlade = 0;
+
+const products = [
+  { name: "Bananen", price: 1.29 },
+  { name: "Milch", price: 0.99 },
+  { name: "Kaffee", price: 4.49 },
+  { name: "Schokolade", price: 1.79 }
+];
+
+function renderProducts() {
+  const grid = document.getElementById("products");
+  grid.innerHTML = "";
+  products.forEach(p => {
+    const btn = document.createElement("button");
+    btn.textContent = `${p.name} (${p.price.toFixed(2)} €)`;
+    btn.className = "bg-blue-500 text-white p-2 rounded";
+    btn.onclick = () => {
+      const existing = cart.find(i => i.name === p.name);
+      if (existing) existing.qty += 1;
+      else cart.push({ ...p, qty: 1 });
+      renderCart();
+    };
+    grid.appendChild(btn);
+  });
+}
+function renderCart() {
+  const list = document.getElementById("cartList");
+  list.innerHTML = "";
+  let total = 0;
+  cart.forEach(i => {
+    const li = document.createElement("li");
+    li.textContent = `${i.name} x${i.qty} = ${(i.qty * i.price).toFixed(2)} €`;
+    total += i.qty * i.price;
+    list.appendChild(li);
+  });
+  document.getElementById("total").textContent = total.toFixed(2);
+}
+function appendInput(n) {
+  input += n;
+  document.getElementById("inputDisplay").value = input;
+}
+function clearInput() {
+  input = "";
+  document.getElementById("inputDisplay").value = "";
+}
+function confirmInput() {
+  alert("Eingabe bestätigt: " + input);
+  clearInput();
+}
+function applyInput(type) {
+  const val = parseFloat(input.replace(",", "."));
+  if (!isNaN(val) && cart.length) {
+    let item = cart[cart.length - 1];
+    if (type === "menge") item.qty = Math.max(1, val);
+    if (type === "rabatt") item.price = Math.max(0.01, item.price - val);
+    if (type === "preis") item.price = Math.max(0.01, val);
+    renderCart();
+  }
+  clearInput();
+}
+function removeLast() {
+  if (cart.length > 1) {
+    cart.pop();
+    renderCart();
+  } else {
+    alert("Mindestens ein Produkt muss im Warenkorb bleiben!");
+  }
+}
+function auftrag() {
+  cart.push({ name: "Auftrag", price: 10.00, qty: 1 });
+  renderCart();
+}
+function pay() {
+  const total = parseFloat(document.getElementById("total").textContent);
+  if (total > 0) {
+    localStorage.setItem("cashoutType", "bezahlung");
+    localStorage.setItem("cashoutAmount", total.toFixed(2));
+    localStorage.setItem("cashoutCart", JSON.stringify(cart));
+    localStorage.setItem("cashoutUser", localStorage.getItem("user") || "admin");
+    bonjournal.push({ items: [...cart], sum: total, type: "BAR" });
+    window.open("checkout.html", "_blank");
+    cart = [];
+    renderCart();
+  }
+}
+function einzahlung() {
+  const val = parseFloat(input.replace(",", "."));
+  if (!isNaN(val)) {
+    const mwst = prompt("MwSt-Satz (0, 7, 19)?");
+    localStorage.setItem("cashoutType", "einzahlung");
+    localStorage.setItem("cashoutAmount", val.toFixed(2));
+    localStorage.setItem("cashoutMwst", mwst);
+    localStorage.setItem("cashoutUser", localStorage.getItem("user") || "admin");
+    kassenlade += val;
+    window.open("checkout.html", "_blank");
+  }
+  clearInput();
+}
+function auszahlung() {
+  const val = parseFloat(input.replace(",", "."));
+  if (!isNaN(val)) {
+    const mwst = prompt("MwSt-Satz (0, 7, 19)?");
+    localStorage.setItem("cashoutType", "auszahlung");
+    localStorage.setItem("cashoutAmount", val.toFixed(2));
+    localStorage.setItem("cashoutMwst", mwst);
+    localStorage.setItem("cashoutUser", localStorage.getItem("user") || "admin");
+    kassenlade -= val;
+    window.open("checkout.html", "_blank");
+  }
+  clearInput();
+}
+function bonAbbruch() {
+  cart = [];
+  renderCart();
+  alert("Bon wurde abgebrochen.");
+}
+function bonStorno() {
+  const last = bonjournal.pop();
+  if (last && last.type === "BAR") {
+    kassenlade -= last.sum;
+    alert("Bon storniert, Betrag zurückgebucht.");
+  }
+  renderBonjournal();
+}
+function toggleBonjournal() {
+  document.getElementById("bonjournalWrapper").classList.toggle("hidden");
+  renderBonjournal();
+}
+function renderBonjournal() {
+  const list = document.getElementById("bonjournal");
+  list.innerHTML = "";
+  bonjournal.forEach((bon, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div class="flex justify-between items-center">
+        <span>Bon ${i + 1}: ${bon.items.map(p => p.name + " x" + p.qty).join(", ")} — ${bon.sum.toFixed(2)} €</span>
+        <div class="flex gap-1">
+          <button onclick="alert('Zahlung: ' + bon.type)" class="text-blue-500 underline text-xs">Details</button>
+          <button onclick="bonStorno()" class="text-red-500 underline text-xs">Storno</button>
+        </div>
+      </div>`;
+    list.appendChild(li);
+  });
+}
+function pause() {
+  const user = document.getElementById("userDisplay").textContent;
+  localStorage.setItem("user", user);
+  location.href = "login.html";
+}
+function logout() {
+  localStorage.removeItem("user");
+  location.href = "login.html";
+}
+
+document.getElementById("userDisplay").textContent = localStorage.getItem("user") || "admin";
+document.getElementById("kassenID").textContent = Math.floor(10000 + Math.random() * 89999);
+setInterval(() => {
+  document.getElementById("timestamp").textContent = new Date().toLocaleString();
+}, 1000);
+renderProducts();
+</script>
+</body>
+</html>
