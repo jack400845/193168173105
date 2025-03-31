@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>POS komplett – Alle Funktionstasten</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+  <div class="max-w-6xl mx-auto bg-white p-6 rounded shadow">
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h1 class="text-xl font-bold">POS System</h1>
+        <p><strong>Benutzer:</strong> <span id="userDisplay">---</span></p>
+        <p><strong>Kassen-ID:</strong> <span id="kassenID">---</span></p>
+        <p><strong>Datum & Uhrzeit:</strong> <span id="timestamp">---</span></p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="pause()" class="bg-gray-400 text-white px-3 py-1 rounded">Pause</button>
+        <button onclick="logout()" class="bg-red-500 text-white px-3 py-1 rounded">Abmelden</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <h2 class="font-semibold mb-2">Warenkorb</h2>
+        <ul id="cartList" class="bg-gray-100 p-2 rounded h-48 overflow-y-auto mb-2"></ul>
+        <p class="font-bold">Gesamt: <span id="total">0.00</span> €</p>
+      </div>
+      <div>
+        <h2 class="font-semibold mb-2">Produkte</h2>
+        <div id="products" class="grid grid-cols-2 gap-2 bg-gray-100 p-2 rounded h-48 overflow-y-auto"></div>
+      </div>
+    </div>
+
+    <div class="mt-6 grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-3 gap-2">
+        <input id="inputDisplay" class="col-span-3 p-2 border text-center text-lg rounded" placeholder="Eingabe..." disabled />
+        <button onclick="appendInput('1')" class="bg-gray-300 rounded">1</button>
+        <button onclick="appendInput('2')" class="bg-gray-300 rounded">2</button>
+        <button onclick="appendInput('3')" class="bg-gray-300 rounded">3</button>
+        <button onclick="appendInput('4')" class="bg-gray-300 rounded">4</button>
+        <button onclick="appendInput('5')" class="bg-gray-300 rounded">5</button>
+        <button onclick="appendInput('6')" class="bg-gray-300 rounded">6</button>
+        <button onclick="appendInput('7')" class="bg-gray-300 rounded">7</button>
+        <button onclick="appendInput('8')" class="bg-gray-300 rounded">8</button>
+        <button onclick="appendInput('9')" class="bg-gray-300 rounded">9</button>
+        <button onclick="appendInput('0')" class="bg-gray-300 rounded">0</button>
+        <button onclick="appendInput('.')" class="bg-gray-300 rounded">,</button>
+        <button onclick="clearInput()" class="bg-red-400 col-span-2 rounded">Löschen</button>
+        <button onclick="confirmInput()" class="bg-green-400 rounded">Eingabe</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="applyInput('preis')" class="bg-yellow-300 rounded">Neuer Preis</button>
+        <button onclick="applyInput('rabatt')" class="bg-yellow-300 rounded">Rabatt</button>
+        <button onclick="applyInput('menge')" class="bg-gray-300 rounded">Menge</button>
+        <button onclick="auftrag()" class="bg-white border rounded">Auftrag</button>
+        <button onclick="removeLast()" class="bg-pink-300 rounded">Zeilenstorno</button>
+        <button onclick="abbruchBon()" class="bg-red-400 text-white rounded">Bonabbruch</button>
+        <button onclick="stornoBon()" class="bg-red-500 text-white rounded">Bonstorno</button>
+        <button onclick="toggleBonjournal()" class="bg-white border rounded">Bonjournal</button>
+        <button onclick="einzahlung()" class="bg-green-500 text-white rounded">Einzahlung</button>
+        <button onclick="auszahlung()" class="bg-red-500 text-white rounded">Auszahlung</button>
+        <button onclick="pay()" class="bg-blue-500 text-white rounded col-span-2 text-lg py-2">Bezahlen</button>
+      </div>
+    </div>
+
+    <div id="bonjournalWrapper" class="hidden mt-6 bg-gray-50 p-4 border rounded">
+      <h2 class="font-semibold mb-2">Bonjournal</h2>
+      <ul id="bonjournal" class="space-y-1 text-sm"></ul>
+    </div>
+  </div>
+
+<script>
+let cart = [], input = "", bonjournal = [];
+
+const products = [
+  { name: "Bananen", price: 1.29 },
+  { name: "Milch", price: 0.99 },
+  { name: "Kaffee", price: 4.49 },
+  { name: "Schokolade", price: 1.79 },
+  { name: "Kekse", price: 2.39 },
+  { name: "Wasser", price: 0.89 },
+  { name: "Saft", price: 1.99 },
+  { name: "Butter", price: 1.59 }
+];
+
+function renderProducts() {
+  const grid = document.getElementById("products");
+  grid.innerHTML = "";
+  products.forEach(p => {
+    const btn = document.createElement("button");
+    btn.textContent = `${p.name} (${p.price.toFixed(2)} €)`;
+    btn.className = "bg-blue-500 text-white p-2 rounded";
+    btn.onclick = () => {
+      const existing = cart.find(i => i.name === p.name);
+      if (existing) existing.qty += 1;
+      else cart.push({ ...p, qty: 1 });
+      renderCart();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function renderCart() {
+  const list = document.getElementById("cartList");
+  list.innerHTML = "";
+  let total = 0;
+  cart.forEach(i => {
+    const li = document.createElement("li");
+    li.textContent = `${i.name} x${i.qty} = ${(i.qty * i.price).toFixed(2)} €`;
+    total += i.qty * i.price;
+    list.appendChild(li);
+  });
+  document.getElementById("total").textContent = total.toFixed(2);
+}
+
+function appendInput(n) {
+  input += n;
+  document.getElementById("inputDisplay").value = input;
+}
+function clearInput() {
+  input = "";
+  document.getElementById("inputDisplay").value = "";
+}
+function confirmInput() {
+  alert("Eingabe: " + input);
+  clearInput();
+}
+function applyInput(type) {
+  const val = parseFloat(input.replace(",", "."));
+  if (!isNaN(val) && cart.length) {
+    let item = cart[cart.length - 1];
+    if (type === "menge") item.qty = Math.max(1, val);
+    if (type === "rabatt") item.price = Math.max(0.01, item.price - val);
+    if (type === "preis") item.price = Math.max(0.01, val);
+    renderCart();
+  }
+  clearInput();
+}
+function removeLast() {
+  if (cart.length > 1) {
+    cart.pop();
+    renderCart();
+  } else alert("Mindestens 1 Produkt muss im Warenkorb bleiben!");
+}
+function pay() {
+  const total = parseFloat(document.getElementById("total").textContent);
+  if (total > 0) {
+    bonjournal.push([...cart]);
+    openCashOut("bezahlung", total);
+    cart = []; renderCart();
+  } else alert("Warenkorb ist leer.");
+}
+function einzahlung() {
+  const amount = prompt("Einzahlungsbetrag:");
+  if (amount && !isNaN(amount)) openCashOut("einzahlung", amount);
+}
+function auszahlung() {
+  const amount = prompt("Auszahlungsbetrag:");
+  if (amount && !isNaN(amount)) openCashOut("auszahlung", amount);
+}
+function abbruchBon() {
+  cart = []; renderCart();
+  alert("Bon wurde abgebrochen.");
+}
+function stornoBon() {
+  toggleBonjournal();
+}
+function toggleBonjournal() {
+  document.getElementById("bonjournalWrapper").classList.toggle("hidden");
+  renderBonjournal();
+}
+function renderBonjournal() {
+  const list = document.getElementById("bonjournal");
+  list.innerHTML = "";
+  bonjournal.forEach((bon, i) => {
+    const li = document.createElement("li");
+    li.textContent = `Bon ${i + 1}: ${bon.map(p => p.name + " x" + p.qty).join(", ")}`;
+    list.appendChild(li);
+  });
+}
+function auftrag() {
+  cart.push({ name: "Auftrag", price: 12.34, qty: 1 });
+  renderCart();
+}
+function openCashOut(type, amount) {
+  localStorage.setItem("cashoutType", type);
+  localStorage.setItem("cashoutAmount", parseFloat(amount).toFixed(2));
+  localStorage.setItem("cashoutUser", localStorage.getItem("user") || "admin");
+  window.open("checkout.html", "_blank");
+}
+function pause() {
+  localStorage.setItem("user", document.getElementById("userDisplay").textContent);
+  location.href = "login.html";
+}
+function logout() {
+  localStorage.removeItem("user");
+  location.href = "login.html";
+}
+document.getElementById("userDisplay").textContent = localStorage.getItem("user") || "admin";
+document.getElementById("kassenID").textContent = Math.floor(10000 + Math.random() * 89999);
+setInterval(() => {
+  document.getElementById("timestamp").textContent = new Date().toLocaleString();
+}, 1000);
+renderProducts();
+</script>
+</body>
+</html>
