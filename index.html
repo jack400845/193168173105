@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>POS – Final korrigiert</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+  <div class="max-w-6xl mx-auto bg-white p-6 rounded shadow">
+    <div class="flex justify-between mb-4">
+      <div>
+        <h1 class="text-2xl font-bold">POS System</h1>
+        <p><strong>Benutzer:</strong> <span id="userDisplay">---</span></p>
+        <p><strong>Kassen-ID:</strong> <span id="kassenID">---</span></p>
+        <p><strong>Zeit:</strong> <span id="timestamp">---</span></p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="pause()" class="bg-gray-400 text-white px-4 py-1 rounded">Pause</button>
+        <button onclick="logout()" class="bg-red-500 text-white px-4 py-1 rounded">Abmelden</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div>
+        <h2 class="font-semibold mb-1">Warenkorb</h2>
+        <ul id="cartList" class="bg-gray-100 h-48 overflow-y-auto p-2 rounded mb-2"></ul>
+        <p class="font-bold">Gesamt: <span id="total">0.00</span> €</p>
+      </div>
+      <div>
+        <h2 class="font-semibold mb-1">Produkte</h2>
+        <div id="products" class="grid grid-cols-2 gap-2 bg-gray-100 p-2 h-48 overflow-y-auto rounded"></div>
+      </div>
+    </div>
+
+    <div id="bonjournalWrapper" class="hidden mt-6 bg-gray-50 p-4 rounded border">
+      <h2 class="font-semibold mb-2">Bonjournal</h2>
+      <ul id="bonjournal" class="space-y-2 text-sm"></ul>
+    </div>
+  </div>
+
+<script>
+let cart = [], input = "", bonjournal = [], kassenlade = 0;
+
+const products = [
+  { name: "Bananen", price: 1.29 },
+  { name: "Milch", price: 0.99 },
+  { name: "Kaffee", price: 4.49 },
+  { name: "Schokolade", price: 1.79 }
+];
+
+function renderProducts() {
+  const grid = document.getElementById("products");
+  grid.innerHTML = "";
+  products.forEach(p => {
+    const btn = document.createElement("button");
+    btn.textContent = `${p.name} (${p.price.toFixed(2)} €)`;
+    btn.className = "bg-blue-500 text-white p-2 rounded";
+    btn.onclick = () => {
+      const existing = cart.find(i => i.name === p.name);
+      if (existing) existing.qty += 1;
+      else cart.push({ ...p, qty: 1 });
+      renderCart();
+    };
+    grid.appendChild(btn);
+  });
+}
+function renderCart() {
+  const list = document.getElementById("cartList");
+  list.innerHTML = "";
+  let total = 0;
+  cart.forEach(i => {
+    const li = document.createElement("li");
+    li.textContent = `${i.name} x${i.qty} = ${(i.qty * i.price).toFixed(2)} €`;
+    total += i.qty * i.price;
+    list.appendChild(li);
+  });
+  document.getElementById("total").textContent = total.toFixed(2);
+}
+function pay() {
+  const total = parseFloat(document.getElementById("total").textContent);
+  if (total > 0) {
+    const user = localStorage.getItem("user") || "admin";
+    localStorage.setItem("cashoutType", "bezahlung");
+    localStorage.setItem("cashoutAmount", total.toFixed(2));
+    localStorage.setItem("cashoutCart", JSON.stringify(cart));
+    localStorage.setItem("cashoutUser", user);
+    bonjournal.push({ items: [...cart], sum: total, type: "BAR", user, status: "bezahlt" });
+    window.open("checkout.html", "_blank");
+    cart = [];
+    renderCart();
+    renderBonjournal();
+  }
+}
+function bonAbbruch() {
+  bonjournal.push({ items: [...cart], sum: 0, type: "-", user: localStorage.getItem("user"), status: "abgebrochen" });
+  cart = [];
+  renderCart();
+  renderBonjournal();
+}
+function bonStorno(index) {
+  const bon = bonjournal[index];
+  if (bon && bon.status === "bezahlt") {
+    kassenlade -= bon.sum;
+    bonjournal.push({ ...bon, status: "storniert" });
+    renderBonjournal();
+    alert("Bon storniert!");
+  }
+}
+function toggleBonjournal() {
+  document.getElementById("bonjournalWrapper").classList.toggle("hidden");
+  renderBonjournal();
+}
+function renderBonjournal() {
+  const list = document.getElementById("bonjournal");
+  list.innerHTML = "";
+  bonjournal.forEach((bon, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div class="flex justify-between items-center">
+        <span>
+          Bon ${i + 1}: ${bon.items.map(p => p.name + " x" + p.qty).join(", ")} — ${bon.sum.toFixed(2)} € (${bon.status})
+        </span>
+        <div class="flex gap-1">
+          <button onclick="alert('Details: ' + JSON.stringify(bon))" class="text-blue-500 underline text-xs">Details</button>
+          ${bon.status === "bezahlt" ? `<button onclick="bonStorno(${i})" class="text-red-500 underline text-xs">Storno</button>` : ""}
+        </div>
+      </div>`;
+    list.appendChild(li);
+  });
+}
+function einzahlung() {
+  const val = parseFloat(prompt("Einzahlungsbetrag:"));
+  if (!isNaN(val)) {
+    const mwst = prompt("MwSt-Satz (0, 7, 19)?");
+    localStorage.setItem("cashoutType", "einzahlung");
+    localStorage.setItem("cashoutAmount", val.toFixed(2));
+    localStorage.setItem("cashoutMwst", mwst);
+    localStorage.setItem("cashoutUser", localStorage.getItem("user") || "admin");
+    kassenlade += val;
+    window.open("checkout.html", "_blank");
+  }
+}
+function auszahlung() {
+  const val = parseFloat(prompt("Auszahlungsbetrag:"));
+  if (!isNaN(val)) {
+    const mwst = prompt("MwSt-Satz (0, 7, 19)?");
+    localStorage.setItem("cashoutType", "auszahlung");
+    localStorage.setItem("cashoutAmount", val.toFixed(2));
+    localStorage.setItem("cashoutMwst", mwst);
+    localStorage.setItem("cashoutUser", localStorage.getItem("user") || "admin");
+    kassenlade -= val;
+    window.open("checkout.html", "_blank");
+  }
+}
+function pause() {
+  const user = document.getElementById("userDisplay").textContent;
+  if (user) localStorage.setItem("pausedUser", user);
+  location.href = "login.html";
+}
+function logout() {
+  localStorage.removeItem("user");
+  location.href = "login.html";
+}
+document.getElementById("userDisplay").textContent = localStorage.getItem("user") || localStorage.getItem("pausedUser") || "admin";
+document.getElementById("kassenID").textContent = Math.floor(10000 + Math.random() * 89999);
+setInterval(() => {
+  document.getElementById("timestamp").textContent = new Date().toLocaleString();
+}, 1000);
+renderProducts();
+</script>
+</body>
+</html>
