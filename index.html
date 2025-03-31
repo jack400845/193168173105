@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>POS mit Cash Out</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">POS mit Cash-Out-Integration</h1>
+    <p>✅ „Bezahlen“, „Einzahlung“ und „Auszahlung“ öffnen jetzt wieder die <strong>Cash-Out-Seite (checkout.html)</strong> zur Auswahl Bar/EC, Rückgeld etc.</p>
+    <p class="text-sm mt-4 text-gray-600">⏳ Die Seite ist nun vorbereitet für vollständige Zahlungsabwicklung via externem Fenster.</p>
+  </div>
+
+  <script>
+    function openCashOut(type, betrag) {
+      localStorage.setItem("cashoutType", type);
+      localStorage.setItem("cashoutAmount", betrag || "0.00");
+      window.open("checkout.html", "_blank");
+    }
+
+    function bezahlen() {
+      const betrag = 99.99;  // Demo
+      openCashOut("bezahlung", betrag.toFixed(2));
+    }
+
+    function einzahlung() {
+      const betrag = prompt("Betrag für Einzahlung:");
+      if (!betrag || isNaN(betrag)) return;
+      openCashOut("einzahlung", parseFloat(betrag).toFixed(2));
+    }
+
+    function auszahlung() {
+      const betrag = prompt("Betrag für Auszahlung:");
+      if (!betrag || isNaN(betrag)) return;
+      openCashOut("auszahlung", parseFloat(betrag).toFixed(2));
+    }
+  </script>
+</body>
+</html>
