@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>POS – Final mit Nummernfeld & Produkten</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4 text-sm">
+  <div class="max-w-6xl mx-auto bg-white p-4 rounded shadow">
+    <h1 class="text-xl font-bold mb-2">POS System</h1>
+    <p>Benutzer: <span id="userDisplay">---</span> | Kassen-ID: <span id="kassenID">---</span> | Zeit: <span id="timestamp">---</span></p>
+
+    <div class="grid grid-cols-2 gap-4 mt-4">
+      <div>
+        <h2 class="font-semibold mb-1">Warenkorb</h2>
+        <ul id="cartList" class="bg-gray-100 h-48 overflow-y-auto p-2 rounded mb-2"></ul>
+        <p class="font-bold">Gesamt: <span id="total">0.00</span> €</p>
+      </div>
+      <div>
+        <h2 class="font-semibold mb-1">Produkte</h2>
+        <div id="products" class="grid grid-cols-2 gap-2 bg-gray-100 p-2 h-48 overflow-y-auto rounded"></div>
+      </div>
+    </div>
+
+    <div class="mt-6 grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-3 gap-2">
+        <input id="inputDisplay" class="col-span-3 p-2 border text-center text-lg rounded" placeholder="Eingabe..." disabled />
+        <button onclick="appendInput('1')" class="bg-gray-200 p-2 rounded">1</button>
+        <button onclick="appendInput('2')" class="bg-gray-200 p-2 rounded">2</button>
+        <button onclick="appendInput('3')" class="bg-gray-200 p-2 rounded">3</button>
+        <button onclick="appendInput('4')" class="bg-gray-200 p-2 rounded">4</button>
+        <button onclick="appendInput('5')" class="bg-gray-200 p-2 rounded">5</button>
+        <button onclick="appendInput('6')" class="bg-gray-200 p-2 rounded">6</button>
+        <button onclick="appendInput('7')" class="bg-gray-200 p-2 rounded">7</button>
+        <button onclick="appendInput('8')" class="bg-gray-200 p-2 rounded">8</button>
+        <button onclick="appendInput('9')" class="bg-gray-200 p-2 rounded">9</button>
+        <button onclick="appendInput('0')" class="bg-gray-200 p-2 rounded">0</button>
+        <button onclick="appendInput('.')" class="bg-gray-200 p-2 rounded">,</button>
+        <button onclick="clearInput()" class="bg-red-300 col-span-2 p-2 rounded">Löschen</button>
+        <button onclick="confirmInput()" class="bg-green-300 p-2 rounded">Eingabe</button>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="pay()" class="bg-blue-500 text-white p-2 rounded col-span-2 text-lg">Bezahlen</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+let cart = [], input = "";
+
+const products = [
+  { name: "Kaffee", price: 2.49 },
+  { name: "Tee", price: 1.99 },
+  { name: "Cola", price: 1.29 },
+  { name: "Wasser", price: 0.89 }
+];
+
+function renderProducts() {
+  const container = document.getElementById("products");
+  products.forEach(p => {
+    const btn = document.createElement("button");
+    btn.textContent = `${p.name} (${p.price.toFixed(2)} €)`;
+    btn.className = "bg-blue-500 text-white p-2 rounded";
+    btn.onclick = () => addToCart(p);
+    container.appendChild(btn);
+  });
+}
+
+function addToCart(p) {
+  const found = cart.find(i => i.name === p.name);
+  if (found) found.qty++;
+  else cart.push({ ...p, qty: 1 });
+  renderCart();
+}
+
+function renderCart() {
+  const list = document.getElementById("cartList");
+  list.innerHTML = "";
+  let total = 0;
+  cart.forEach(item => {
+    const li = document.createElement("li");
+    li.textContent = `${item.name} x${item.qty} = ${(item.qty * item.price).toFixed(2)} €`;
+    list.appendChild(li);
+    total += item.qty * item.price;
+  });
+  document.getElementById("total").textContent = total.toFixed(2);
+}
+
+function appendInput(val) {
+  input += val;
+  document.getElementById("inputDisplay").value = input;
+}
+
+function clearInput() {
+  input = "";
+  document.getElementById("inputDisplay").value = "";
+}
+
+function confirmInput() {
+  alert("Eingabe: " + input);
+  clearInput();
+}
+
+function pay() {
+  alert("Bezahlen-Funktion wurde ausgelöst.");
+}
+
+document.getElementById("userDisplay").textContent = localStorage.getItem("user") || "admin";
+document.getElementById("kassenID").textContent = Math.floor(10000 + Math.random() * 89999);
+setInterval(() => {
+  document.getElementById("timestamp").textContent = new Date().toLocaleString();
+}, 1000);
+
+renderProducts();
+</script>
+</body>
+</html>
