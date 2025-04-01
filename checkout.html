@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Checkout</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white p-6 text-sm">
+  <h1 class="text-xl font-bold mb-4">Zahlung abschließen</h1>
+  <div id="summary"></div>
+  <div class="mt-4">
+    <button onclick="complete('BAR')" class="bg-yellow-400 px-4 py-2 rounded mr-2">Bar</button>
+    <button onclick="complete('EFT')" class="bg-blue-500 text-white px-4 py-2 rounded">EC</button>
+  </div>
+
+  <script>
+    const cart = JSON.parse(localStorage.getItem("cashoutCart") || "[]");
+    const sum = parseFloat(localStorage.getItem("cashoutAmount") || "0");
+    const user = localStorage.getItem("cashoutUser") || "admin";
+    const wrapper = document.getElementById("summary");
+
+    wrapper.innerHTML = `
+      <p><strong>Benutzer:</strong> ${user}</p>
+      <p><strong>Summe:</strong> ${sum.toFixed(2)} €</p>
+      <ul class="mt-2">${cart.map(i => `<li>${i.qty}x ${i.name} (${(i.price*i.qty).toFixed(2)} €)</li>`).join("")}</ul>
+    `;
+
+    function complete(type) {
+      alert("Zahlung abgeschlossen per: " + type);
+      window.close();
+    }
+  </script>
+</body>
+</html>

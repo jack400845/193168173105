@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>POS System – Komplett</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4 text-sm">
+  <div class="max-w-7xl mx-auto bg-white p-6 rounded shadow">
+    <div class="flex justify-between mb-4">
+      <div>
+        <h1 class="text-xl font-bold">POS System</h1>
+        <p>Benutzer: <span id="userDisplay">---</span></p>
+        <p>Kassen-ID: <span id="kassenID">---</span></p>
+        <p>Zeit: <span id="timestamp">---</span></p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="pause()" class="bg-gray-400 text-white px-3 py-1 rounded">Pause</button>
+        <button onclick="logout()" class="bg-red-500 text-white px-3 py-1 rounded">Abmelden</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <h2 class="font-semibold mb-1">Warenkorb</h2>
+        <ul id="cartList" class="bg-gray-100 p-2 h-48 overflow-y-auto rounded mb-2"></ul>
+        <p class="font-bold">Gesamt: <span id="total">0.00</span> €</p>
+      </div>
+      <div>
+        <h2 class="font-semibold mb-1">Produkte</h2>
+        <div id="products" class="grid grid-cols-2 gap-2 bg-gray-100 p-2 h-48 overflow-y-auto rounded"></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-3 gap-2">
+        <input id="inputDisplay" class="col-span-3 p-2 border text-center text-lg rounded" disabled />
+        ${[1,2,3,4,5,6,7,8,9,0,'.'].map(n => `<button onclick="appendInput('${n}')" class="bg-gray-200 p-2 rounded">${n}</button>`).join('')}
+        <button onclick="clearInput()" class="bg-red-400 col-span-2 p-2 rounded">Löschen</button>
+        <button onclick="confirmInput()" class="bg-green-400 p-2 rounded">Eingabe</button>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="applyInput('preis')" class="bg-yellow-200 p-2 rounded">Neuer Preis</button>
+        <button onclick="applyInput('rabatt')" class="bg-yellow-200 p-2 rounded">Rabatt</button>
+        <button onclick="applyInput('menge')" class="bg-gray-300 p-2 rounded">Menge</button>
+        <button onclick="auftrag()" class="bg-white border p-2 rounded">Auftrag</button>
+        <button onclick="removeLast()" class="bg-pink-200 p-2 rounded">Zeilenstorno</button>
+        <button onclick="bonAbbruch()" class="bg-red-300 text-white p-2 rounded">Bonabbruch</button>
+        <button onclick="bonStorno()" class="bg-red-500 text-white p-2 rounded">Bonstorno</button>
+        <button onclick="toggleBonjournal()" class="bg-white border p-2 rounded">Bonjournal</button>
+        <button onclick="einzahlung()" class="bg-green-500 text-white p-2 rounded">Einzahlung</button>
+        <button onclick="auszahlung()" class="bg-red-500 text-white p-2 rounded">Auszahlung</button>
+        <button onclick="pay()" class="bg-blue-500 text-white p-2 rounded col-span-2 text-lg">Bezahlen</button>
+      </div>
+    </div>
+
+    <div id="bonjournalWrapper" class="hidden mt-6 bg-gray-50 p-4 border rounded">
+      <h2 class="font-semibold mb-2">Bonjournal</h2>
+      <ul id="bonjournal" class="space-y-2 text-sm"></ul>
+    </div>
+  </div>
+
+<script>
+let cart = [], input = "", bonjournal = [], kassenlade = 0;
+const products = [
+  { name: "Kaffee", price: 2.49 },
+  { name: "Tee", price: 1.99 },
+  { name: "Cola", price: 1.29 },
+  { name: "Wasser", price: 0.89 }
+];
+function renderProducts() {
+  const container = document.getElementById("products");
+  container.innerHTML = "";
+  products.forEach(p => {
+    const btn = document.createElement("button");
+    btn.textContent = `${p.name} (${p.price.toFixed(2)} €)`;
+    btn.className = "bg-blue-500 text-white p-2 rounded";
+    btn.onclick = () => addToCart(p);
+    container.appendChild(btn);
+  });
+}
+function addToCart(p) {
+  const found = cart.find(i => i.name === p.name);
+  if (found) found.qty++;
+  else cart.push({ ...p, qty: 1 });
+  renderCart();
+}
+function renderCart() {
+  const list = document.getElementById("cartList");
+  list.innerHTML = "";
+  let total = 0;
+  cart.forEach(item => {
+    const li = document.createElement("li");
+    li.textContent = `${item.name} x${item.qty} = ${(item.qty * item.price).toFixed(2)} €`;
+    list.appendChild(li);
+    total += item.qty * item.price;
+  });
+  document.getElementById("total").textContent = total.toFixed(2);
+}
+function appendInput(val) {
+  input += val;
+  document.getElementById("inputDisplay").value = input;
+}
+function clearInput() {
+  input = "";
+  document.getElementById("inputDisplay").value = "";
+}
+function confirmInput() {
+  alert("Eingabe: " + input);
+  clearInput();
+}
+function applyInput(type) {
+  const val = parseFloat(input.replace(",", "."));
+  if (!isNaN(val) && cart.length) {
+    let item = cart[cart.length - 1];
+    if (type === "menge") item.qty = Math.max(1, val);
+    if (type === "rabatt") item.price = Math.max(0.01, item.price - val);
+    if (type === "preis") item.price = Math.max(0.01, val);
+    renderCart();
+  }
+  clearInput();
+}
+function removeLast() {
+  if (cart.length > 1) {
+    cart.pop();
+    renderCart();
+  } else {
+    alert("Mind. 1 Produkt muss im Warenkorb bleiben!");
+  }
+}
+function auftrag() {
+  cart.push({ name: "Auftrag", price: 15.00, qty: 1 });
+  renderCart();
+}
+function pay() {
+  const total = parseFloat(document.getElementById("total").textContent);
+  if (total > 0) {
+    localStorage.setItem("cashoutType", "bezahlung");
+    localStorage.setItem("cashoutAmount", total.toFixed(2));
+    localStorage.setItem("cashoutCart", JSON.stringify(cart));
+    localStorage.setItem("cashoutUser", localStorage.getItem("user") || "admin");
+    bonjournal.push({ items: [...cart], sum: total, type: "BAR", status: "bezahlt" });
+    cart = [];
+    renderCart();
+    window.open("checkout.html", "_blank");
+  }
+}
+function einzahlung() {
+  const val = parseFloat(input.replace(",", "."));
+  if (!isNaN(val)) {
+    const mwst = prompt("MwSt-Satz (0, 7, 19)?");
+    localStorage.setItem("cashoutType", "einzahlung");
+    localStorage.setItem("cashoutAmount", val.toFixed(2));
+    localStorage.setItem("cashoutMwst", mwst);
+    kassenlade += val;
+    bonjournal.push({ sum: val, type: "BAR", status: "einzahlung" });
+    clearInput();
+    window.open("checkout.html", "_blank");
+  }
+}
+function auszahlung() {
+  const val = parseFloat(input.replace(",", "."));
+  if (!isNaN(val)) {
+    const mwst = prompt("MwSt-Satz (0, 7, 19)?");
+    localStorage.setItem("cashoutType", "auszahlung");
+    localStorage.setItem("cashoutAmount", val.toFixed(2));
+    localStorage.setItem("cashoutMwst", mwst);
+    kassenlade -= val;
+    bonjournal.push({ sum: val, type: "BAR", status: "auszahlung" });
+    clearInput();
+    window.open("checkout.html", "_blank");
+  }
+}
+function bonAbbruch() {
+  bonjournal.push({ items: [...cart], sum: 0, type: "-", status: "abgebrochen" });
+  cart = [];
+  renderCart();
+  renderBonjournal();
+}
+function bonStorno() {
+  if (bonjournal.length > 0) {
+    const bon = bonjournal[bonjournal.length - 1];
+    if (bon.status === "bezahlt") {
+      kassenlade -= bon.sum;
+      bonjournal.push({ ...bon, status: "storniert" });
+      renderBonjournal();
+      alert("Bon storniert.");
+    }
+  }
+}
+function toggleBonjournal() {
+  document.getElementById("bonjournalWrapper").classList.toggle("hidden");
+  renderBonjournal();
+}
+function renderBonjournal() {
+  const list = document.getElementById("bonjournal");
+  list.innerHTML = "";
+  bonjournal.forEach((bon, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div class="flex justify-between items-center">
+        <span>Bon ${i + 1}: ${(bon.items || []).map(p => p.name + " x" + p.qty).join(", ")} – ${bon.sum?.toFixed(2) || "0.00"} € (${bon.status})</span>
+        <button onclick="alert('Details: ' + JSON.stringify(bon, null, 2))" class="text-blue-500 underline text-xs">Details</button>
+      </div>`;
+    list.appendChild(li);
+  });
+}
+function pause() {
+  const user = document.getElementById("userDisplay").textContent;
+  if (user) localStorage.setItem("pausedUser", user);
+  location.href = "login.html";
+}
+function logout() {
+  localStorage.removeItem("user");
+  location.href = "login.html";
+}
+document.getElementById("userDisplay").textContent = localStorage.getItem("user") || localStorage.getItem("pausedUser") || "admin";
+document.getElementById("kassenID").textContent = Math.floor(10000 + Math.random() * 89999);
+setInterval(() => {
+  document.getElementById("timestamp").textContent = new Date().toLocaleString();
+}, 1000);
+renderProducts();
+</script>
+</body>
+</html>
